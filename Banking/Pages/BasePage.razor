@@ -1,0 +1,14 @@
+﻿@using Microsoft.ApplicationInsights
+@inject TelemetryClient appInsights
+
+<h3>BasePage</h3>
+
+@code { 
+    
+       protected override Task OnInitializedAsync()
+    {
+        System.Diagnostics.Debug.WriteLine($"This is page: {GetType().Name}");
+        appInsights.TrackPageView(GetType().Name);
+        return base.OnInitializedAsync();
+    }
+}

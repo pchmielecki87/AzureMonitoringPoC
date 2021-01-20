@@ -1,0 +1,29 @@
+﻿@page "/user"
+@inherits BasePage
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor http
+@using Microsoft.ApplicationInsights
+@inject TelemetryClient appInsights
+
+<h3>UserPage</h3>
+
+<p> <input @bind="CustomerName" />This is your name and your support key: @CustomerName </p>
+
+<button class="btn btn-primary" @onclick="OnLogin">Login</button>
+
+@code {
+
+    public string CustomerName
+    {
+        get;
+        set;
+    }
+
+    public void OnLogin()
+    {
+        appInsights.TrackEvent(nameof(OnLogin));        //track login
+        appInsights.Context.User.Id = CustomerName;
+    }
+
+
+}

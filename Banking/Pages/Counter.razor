@@ -1,0 +1,99 @@
+﻿@page "/counter"
+@inherits BasePage
+@using Banking.Model
+@using Microsoft.ApplicationInsights
+@inject TelemetryClient appInsights
+@using Microsoft.ApplicationInsights.DataContracts
+<h1>Counter</h1>
+
+<p>Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<button class="btn btn-primary" @onclick="OnNullReferenceException">Throw new null reference exception</button>
+<button class="btn btn-primary" @onclick="OnTaskCancelException">Throw task cancelled exception</button>
+<button class="btn btn-primary" @onclick="OnTransacionApi">Transaction call</button>
+
+<h1>@CurrentTransaction</h1>
+
+
+<p> <input @bind="CustomerName" />This is your name and your support key: @CustomerName </p>
+
+<button class="btn btn-primary" @onclick="OnLogin">Login</button>
+
+@code {
+    private int currentCount = 0;
+    public string CurrentTransaction
+    {
+        get;
+        set;
+    }
+
+    private void IncrementCount()
+    {
+        try
+        {
+            throw new OutOfMemoryException();
+        }
+        catch(Exception e)
+        {
+            e.HandledbyPolicy(appInsights);
+        }
+        // But we still don't know how to distinquse between diffrent exceptions
+        //
+        //appInsights.TrackException(e);
+    }
+
+    private async void OnTransacionApi()
+    {
+
+        var operation = appInsights.StartOperation<RequestTelemetry>("TransactionAPI");
+
+        var client = new HttpClient();
+        var response = await client.GetAsync("https://bankingsdc.azurewebsites.net/api/Transaction?code=rtS2aB17YEOhR5Is1YquKOp73YMHKRWREljXUsuWUNSg4s6XYJsqPg==&delay=5");
+        CurrentTransaction = await response.Content.ReadAsStringAsync();
+        StateHasChanged();
+
+        appInsights.StopOperation(operation);
+
+    }
+
+    private void OnNullReferenceException()
+    {
+        try
+        {
+            throw new NullReferenceException();
+        }
+        catch (Exception e)
+        {
+            e.HandledbyPolicy(appInsights);
+        }
+        // But we still don't know how to distinquse between diffrent exceptions
+        //e.HandledbyPolicy(appInsights);
+        //appInsights.TrackException(e);
+    }
+    private void OnTaskCancelException()
+    {
+        try
+        {
+            throw new OperationCanceledException();
+        }
+        catch (Exception e)
+        {
+            e.HandledbyPolicy(appInsights);
+        }
+        //e.HandledbyPolicy(appInsights);
+        //appInsights.TrackException(e);
+
+    }
+
+    public string CustomerName
+    {
+        get;
+        set;
+    }
+
+    public void OnLogin()
+    {
+        appInsights.Context.User.Id = CustomerName;
+    }
+}
